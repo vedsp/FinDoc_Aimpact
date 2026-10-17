@@ -227,10 +227,17 @@ def get_dashboard_overview(
             "LOW"
         )
 
-    # Extract assessee details from ExtractedField
-    assessee_name = db.query(ExtractedField.field_value).filter(ExtractedField.document_id.in_([d.id for d in user_docs]), ExtractedField.field_name == "Account Holder").scalar()
-    assessee_pan = db.query(ExtractedField.field_value).filter(ExtractedField.document_id.in_([d.id for d in user_docs]), ExtractedField.field_name == "PAN").scalar()
-    assessee_gstin = db.query(GSTRecord.gstin).filter(GSTRecord.document_id.in_([d.id for d in user_docs])).scalar()
+    # Extract assessee details from ExtractedField safely
+    name_row = db.query(ExtractedField.field_value).filter(ExtractedField.document_id.in_([d.id for d in user_docs]), ExtractedField.field_name == "Account Holder").first()
+    pan_row = db.query(ExtractedField.field_value).filter(ExtractedField.document_id.in_([d.id for d in user_docs]), ExtractedField.field_name == "PAN").first()
+    gst_row = db.query(GSTRecord.gstin).filter(GSTRecord.document_id.in_([d.id for d in user_docs])).first()
+
+    assessee_name = name_row[0] if name_row else None
+    assessee_pan = pan_row[0] if pan_row else None
+    assessee_gstin = gst_row[0] if gst_row else None
+    if not assessee_gstin:
+        gstin_field = db.query(ExtractedField.field_value).filter(ExtractedField.document_id.in_([d.id for d in user_docs]), ExtractedField.field_name == "GSTIN").first()
+        assessee_gstin = gstin_field[0] if gstin_field else None
 
     return DashboardOverview(
         documents_processed=len(user_docs),
