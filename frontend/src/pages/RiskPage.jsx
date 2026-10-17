@@ -47,7 +47,7 @@ export const RiskPage = () => {
 
         <div className="bg-white border border-slate-300 p-4 rounded-[2px] text-xs text-slate-600">
           <span className="font-semibold text-slate-800">No evidence records ingested.</span>{' '}
-          <span className="text-slate-500">Upload bank statements, GST returns, or invoices to generate explainable compliance risk metrics, or click <strong>Load Demo Scenario</strong>.</span>
+          <span className="text-slate-500">Upload bank statements, GST returns, or invoices to generate explainable compliance risk metrics.</span>
         </div>
       </div>
     );

@@ -76,7 +76,8 @@ export const documentApi = {
   delete: (id) => apiFetch(`/documents/${id}`, { method: 'DELETE' }),
   getDashboardOverview: () => apiFetch('/documents/dashboard/overview'),
   getRiskAssessment: () => apiFetch('/documents/risk/assessment'),
-  getAnomalies: () => apiFetch('/documents/anomalies/list')
+  getAnomalies: () => apiFetch('/documents/anomalies/list'),
+  clearSessionDocuments: () => apiFetch('/documents/session/clear', { method: 'DELETE' })
 };
 
 

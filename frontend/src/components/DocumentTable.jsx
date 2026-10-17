@@ -58,7 +58,7 @@ export const DocumentTable = ({ documents, onViewDetail, onDeleteDocument, loadi
   if (!documents || documents.length === 0) {
     return (
       <div className="p-3 bg-[#f9fafb] border border-[#dddddd] text-xs text-[#555555]">
-        No evidence documents uploaded. Click <strong>+ Upload Document</strong> or <strong>Load Demo Scenario</strong> to import records.
+        No evidence documents uploaded. Click <strong>+ Upload Document</strong> to import records.
       </div>
     );
   }

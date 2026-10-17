@@ -8,7 +8,7 @@ from app.core.database import get_db
 from app.core.config import settings
 from app.models.models import (
     User, Document, DocumentStatus, DocumentCategory, DocumentPage,
-    ExtractedField, BankTransaction, Invoice, GSTRecord, Anomaly, RiskAssessment
+    ExtractedField, BankTransaction, Invoice, GSTRecord, Anomaly, RiskAssessment, ChatSession
 )
 from app.schemas.schemas import DocumentResponse, DocumentDetailResponse, DashboardOverview, MessageResponse
 from app.api.deps import get_current_user
@@ -343,6 +343,26 @@ def get_document_detail(
         anomalies_count=anomaly_count
     )
     return detail
+
+@router.delete("/session/clear", response_model=MessageResponse)
+def clear_session_documents(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    user_docs = db.query(Document).filter(Document.user_id == current_user.id).all()
+    for doc in user_docs:
+        if doc.storage_path:
+            try:
+                storage.delete_file(doc.storage_path)
+            except Exception:
+                pass
+        db.delete(doc)
+
+    db.query(RiskAssessment).filter(RiskAssessment.user_id == current_user.id).delete(synchronize_session=False)
+    db.query(ChatSession).filter(ChatSession.user_id == current_user.id).delete(synchronize_session=False)
+    db.commit()
+
+    return MessageResponse(message="All session documents unloaded successfully.", status="success")
 
 @router.delete("/{document_id}", response_model=MessageResponse)
 def delete_document(

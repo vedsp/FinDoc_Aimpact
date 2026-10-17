@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { demoApi, documentApi } from '../services/api';
-import { LogOut, RefreshCw } from 'lucide-react';
+import { documentApi } from '../services/api';
+import { LogOut, RefreshCw, Trash2 } from 'lucide-react';
 
 const getFinancialYear = (document) => {
   const source = `${document.original_name || ''} ${document.filename || ''}`;
@@ -26,9 +26,8 @@ const getAssessmentYear = (financialYear) => {
 
 export const Navbar = ({ onDemoLoaded, refreshTrigger }) => {
   const { user, logout } = useAuth();
-  const [loadingDemo, setLoadingDemo] = useState(false);
-  const [loadingUnload, setLoadingUnload] = useState(false);
-  const [demoMessage, setDemoMessage] = useState(null);
+  const [loadingClear, setLoadingClear] = useState(false);
+  const [statusMessage, setStatusMessage] = useState(null);
   const [financialYears, setFinancialYears] = useState([]);
   const [selectedFinancialYear, setSelectedFinancialYear] = useState('');
   const [assesseeInfo, setAssesseeInfo] = useState({ name: '—', pan: '' });
@@ -77,34 +76,19 @@ export const Navbar = ({ onDemoLoaded, refreshTrigger }) => {
     return () => { active = false; };
   }, [refreshTrigger, user]);
 
-  const handleSeedDemo = async () => {
-    setLoadingDemo(true);
-    setDemoMessage(null);
+  const handleClearSession = async () => {
+    if (!window.confirm("Are you sure you want to unload all documents and reset this audit session?")) return;
+    setLoadingClear(true);
+    setStatusMessage(null);
     try {
-      const res = await demoApi.seedDemo();
-      setDemoMessage("Demo dataset 'ABC Manufacturing Pvt Ltd' loaded successfully.");
+      const res = await documentApi.clearSessionDocuments();
+      setStatusMessage(res.message || "All session documents unloaded successfully.");
       if (onDemoLoaded) onDemoLoaded();
-      setTimeout(() => setDemoMessage(null), 4000);
+      setTimeout(() => setStatusMessage(null), 4000);
     } catch (err) {
-      alert("Failed to load demo data: " + err.message);
+      alert("Failed to unload session documents: " + (err.message || err));
     } finally {
-      setLoadingDemo(false);
-    }
-  };
-
-  const handleUnloadDemo = async () => {
-    if (!window.confirm('Remove the ABC Manufacturing demo records?')) return;
-    setLoadingUnload(true);
-    setDemoMessage(null);
-    try {
-      const res = await demoApi.unloadDemo();
-      setDemoMessage(res.message || 'Demo records removed.');
-      if (onDemoLoaded) onDemoLoaded();
-      setTimeout(() => setDemoMessage(null), 4000);
-    } catch (err) {
-      alert("Failed to unload demo data: " + err.message);
-    } finally {
-      setLoadingUnload(false);
+      setLoadingClear(false);
     }
   };
 
@@ -174,28 +158,19 @@ export const Navbar = ({ onDemoLoaded, refreshTrigger }) => {
       </div>
       
       <div className="flex items-center gap-2">
-        {demoMessage && (
-          <span className="text-positive text-xs">
-            {demoMessage}
+        {statusMessage && (
+          <span className="text-positive text-xs font-semibold">
+            {statusMessage}
           </span>
         )}
         <button
-          onClick={handleSeedDemo}
-          disabled={loadingDemo}
-          className="btn-primary text-xs"
-          title="Import synthetic test ledger for ABC Manufacturing Pvt Ltd"
+          onClick={handleClearSession}
+          disabled={loadingClear}
+          className="btn-secondary text-xs flex items-center gap-1.5 text-rose-700 hover:text-rose-800 hover:bg-rose-50 border-rose-300"
+          title="Unload all session documents and reset audit workspace"
         >
-          {loadingDemo && <RefreshCw className="w-3 h-3 animate-spin" />}
-          <span>{loadingDemo ? "Importing..." : "Load Demo Scenario"}</span>
-        </button>
-        <button
-          onClick={handleUnloadDemo}
-          disabled={loadingUnload}
-          className="btn-secondary text-xs"
-          title="Clear the demo scenario records"
-        >
-          {loadingUnload && <RefreshCw className="w-3 h-3 animate-spin" />}
-          <span>{loadingUnload ? "Clearing..." : "Unload Demo"}</span>
+          {loadingClear ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+          <span>{loadingClear ? "Unloading..." : "Unload Session Documents"}</span>
         </button>
       </div>
     </div>
