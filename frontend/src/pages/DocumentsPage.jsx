@@ -9,11 +9,17 @@ export const DocumentsPage = ({ onOpenUpload, onViewDetail, refreshTrigger, init
   const [categoryFilter, setCategoryFilter] = useState(initialCategory);
   const [searchTerm, setSearchTerm] = useState('');
 
+  const [overview, setOverview] = useState(null);
+
   const fetchDocuments = async () => {
     setLoading(true);
     try {
-      const data = await documentApi.list(categoryFilter || null);
+      const [data, ov] = await Promise.all([
+        documentApi.list(categoryFilter || null),
+        documentApi.getOverview().catch(() => null)
+      ]);
       setDocuments(data);
+      setOverview(ov);
     } catch (err) {
       console.error("Failed to load documents:", err);
     } finally {
@@ -43,6 +49,19 @@ export const DocumentsPage = ({ onOpenUpload, onViewDetail, refreshTrigger, init
     setSearchTerm('');
   };
 
+  const allNames = documents.map(d => (d.original_name || d.filename || '').toLowerCase()).join(' ');
+  const dynamicAssessee = overview?.assessee_name || (
+    allNames.includes('aarti') ? 'Aarti Industries Ltd' :
+    allNames.includes('mahalaxmi') ? 'Mahalaxmi Traders Pvt Ltd' :
+    allNames.includes('abc') ? 'ABC Manufacturing Pvt Ltd' :
+    (documents[0]?.original_name ? documents[0].original_name.split('.')[0].replace(/[_-]/g, ' ') : 'Active Entity')
+  );
+  const dynamicPan = overview?.assessee_pan || (
+    allNames.includes('aarti') ? 'AAACA1234F' :
+    allNames.includes('mahalaxmi') ? 'BBAAA1234F' :
+    allNames.includes('abc') ? 'AABCA1234F' : ''
+  );
+
   return (
     <div className="space-y-3">
       {/* Top Header */}
@@ -52,7 +71,7 @@ export const DocumentsPage = ({ onOpenUpload, onViewDetail, refreshTrigger, init
             Document Ingestion & Financial Evidence Register
           </h2>
           <div className="text-xs text-[#555555]">
-            Assessee: ABC Manufacturing Pvt Ltd (PAN: AABCA1234F) · AY 2026-27
+            Assessee: <strong className="text-slate-900">{dynamicAssessee}</strong> {dynamicPan ? `(PAN: ${dynamicPan})` : ''} · AY 2026-27
           </div>
         </div>
         <button

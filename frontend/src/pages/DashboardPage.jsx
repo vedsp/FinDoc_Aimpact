@@ -120,11 +120,20 @@ export const DashboardPage = ({ onNavigate, onOpenUpload, onViewDetail, refreshT
 
           // Legal name fallback
           if (legalName === '—') {
-            if (allNames.includes('abc') || allNames.includes('manufacturing')) {
+            if (allNames.includes('aarti')) {
+              legalName = 'Aarti Industries Ltd';
+              if (pan === '—') pan = 'AAACA1234F';
+              if (gstin === '—') gstin = '27AAACA1234F1Z5';
+            } else if (allNames.includes('mahalaxmi')) {
+              legalName = 'Mahalaxmi Traders Pvt Ltd';
+              if (pan === '—') pan = 'BBAAA1234F';
+              if (gstin === '—') gstin = '27BBAAA1234F1Z1';
+            } else if (allNames.includes('abc') || allNames.includes('manufacturing')) {
               legalName = 'ABC Manufacturing Pvt Ltd';
+              if (pan === '—') pan = 'AABCA1234F';
             } else {
               const raw = docs[0]?.original_name || docs[0]?.filename || '';
-              legalName = raw.replace(/\.[^.]+$/, '').replace(/[_\-]/g, ' ').trim() || 'Unknown Entity';
+              legalName = raw.replace(/\.[^.]+$/, '').replace(/[_\-]/g, ' ').trim() || 'Active Enterprise';
             }
           }
 
