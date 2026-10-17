@@ -122,7 +122,7 @@ async def upload_documents(
                     f"Field: {a.get('field', '')} | "
                     f"Value: {a.get('value', '')}"
                 ),
-                details_json=str(a),
+                details_json=json.dumps(a) if isinstance(a, dict) else str(a),
             ))
 
         update_baseline(db, current_user.id, vendor_name, category, len(content))
@@ -289,6 +289,17 @@ def get_anomalies_list(
     anomalies = db.query(Anomaly).join(Document).filter(Document.user_id == current_user.id).order_by(Anomaly.created_at.desc()).all()
     results = []
     for a in anomalies:
+        details = {}
+        if a.details_json:
+            try:
+                details = json.loads(a.details_json)
+            except Exception:
+                try:
+                    import ast
+                    details = ast.literal_eval(a.details_json)
+                except Exception:
+                    details = {"raw": str(a.details_json)}
+
         results.append({
             "id": a.id,
             "document_id": a.document_id,
@@ -297,7 +308,7 @@ def get_anomalies_list(
             "severity": a.severity,
             "description": a.description,
             "explanation": a.explanation,
-            "details": json.loads(a.details_json) if a.details_json else {},
+            "details": details,
             "created_at": a.created_at
         })
     return results

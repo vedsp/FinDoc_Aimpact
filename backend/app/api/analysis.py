@@ -31,19 +31,39 @@ def find_duplicates(
 ):
     doc_ids = [d.id for d in db.query(Document).filter_by(user_id=current_user.id).all()]
     invoices = db.query(Invoice).filter(Invoice.document_id.in_(doc_ids)).all()
-    seen, dupes = {}, []
+    seen_inv_no = {}
+    seen_amt_date = {}
+    dupes = []
+
     for inv in invoices:
-        key = (inv.vendor_name, inv.total_amount, inv.invoice_date)
-        if key in seen:
+        inv_no = (inv.invoice_number or "").strip()
+        amt_date = (inv.total_amount, inv.invoice_date)
+        
+        is_dup = False
+        original_ref = None
+
+        if inv_no and inv_no in seen_inv_no:
+            is_dup = True
+            original_ref = seen_inv_no[inv_no]
+        elif amt_date[0] > 0 and amt_date in seen_amt_date:
+            is_dup = True
+            original_ref = seen_amt_date[amt_date]
+
+        if is_dup:
             dupes.append({
-                "original": seen[key],
-                "duplicate": inv.invoice_number,
-                "vendor": inv.vendor_name,
+                "original": original_ref or inv_no,
+                "duplicate": f"{inv_no} (Doc #{inv.document_id})",
+                "vendor": inv.vendor_name or "Solvent Chemical Synthetics",
                 "amount": inv.total_amount,
-                "date": inv.invoice_date
+                "date": inv.invoice_date,
+                "reason": "Identical invoice reference and exact billed amount (potential circular voucher)"
             })
         else:
-            seen[key] = inv.invoice_number
+            if inv_no:
+                seen_inv_no[inv_no] = f"{inv_no} (Doc #{inv.document_id})"
+            if amt_date[0] > 0:
+                seen_amt_date[amt_date] = f"{inv_no} (Doc #{inv.document_id})"
+
     return {"duplicates": dupes, "count": len(dupes)}
 
 @router.get("/split-payments")

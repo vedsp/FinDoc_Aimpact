@@ -157,16 +157,16 @@ export const Navbar = ({ onDemoLoaded, refreshTrigger }) => {
         <span className="text-slate-600">Assessee: <strong className="text-slate-900">{assesseeInfo.name}</strong> {assesseeInfo.pan ? `(PAN: ${assesseeInfo.pan})` : ''}</span>
       </div>
       
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 shrink-0">
         {statusMessage && (
-          <span className="text-positive text-xs font-semibold">
+          <span className="text-positive text-xs font-semibold whitespace-nowrap">
             {statusMessage}
           </span>
         )}
         <button
           onClick={handleClearSession}
           disabled={loadingClear}
-          className="btn-secondary text-xs flex items-center gap-1.5 text-rose-700 hover:text-rose-800 hover:bg-rose-50 border-rose-300"
+          className="btn-secondary text-xs flex items-center gap-1.5 text-rose-700 hover:text-rose-800 hover:bg-rose-50 border-rose-300 whitespace-nowrap shrink-0 px-2.5 py-1 font-semibold"
           title="Unload all session documents and reset audit workspace"
         >
           {loadingClear ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
