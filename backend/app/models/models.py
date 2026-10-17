@@ -215,3 +215,16 @@ class AuditLog(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="audit_logs")
+
+
+class VendorBaseline(Base):
+    __tablename__ = "vendor_baselines"
+
+    id           = Column(Integer, primary_key=True, index=True)
+    user_id      = Column(Integer, ForeignKey("users.id"), nullable=False)
+    vendor_name  = Column(String, index=True, nullable=False)
+    doc_type     = Column(String, nullable=False)          # INVOICE | BANK_STATEMENT etc.
+    avg_amount   = Column(Float, default=0.0)
+    max_amount   = Column(Float, default=0.0)
+    sample_count = Column(Integer, default=0)
+    updated_at   = Column(DateTime, default=datetime.utcnow)

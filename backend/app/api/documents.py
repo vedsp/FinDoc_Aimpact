@@ -97,33 +97,51 @@ async def upload_documents(
         db.add(doc_record)
         db.commit()
         db.refresh(doc_record)
-        
-        # Save page text preview if available
+        # Save extracted page text for RAG (used by chat endpoint)
         if extracted_text_preview:
-            page_record = DocumentPage(
+            db.add(DocumentPage(
                 document_id=doc_record.id,
                 page_number=1,
-                extracted_text=extracted_text_preview[:4000]
-            )
-            db.add(page_record)
-            
-            # Auto-generate some extracted fields based on filename heuristics
-            if "mahalaxmi" in filename.lower():
-                db.add(ExtractedField(document_id=doc_record.id, field_name="Account Holder", field_value="Mahalaxmi Traders Pvt Ltd", confidence=0.92))
-                db.add(ExtractedField(document_id=doc_record.id, field_name="PAN", field_value="BBAAA1234F", confidence=0.98))
-                
-                if category == DocumentCategory.BANK_STATEMENT.value:
-                    db.add(BankTransaction(document_id=doc_record.id, date="2025-09-01", description="CREDIT-INWARD", debit=0, credit=850000, balance=1250000))
-                    db.add(BankTransaction(document_id=doc_record.id, date="2025-09-05", description="DEBIT-VENDOR", debit=350000, credit=0, balance=900000))
-            else:
-                db.add(ExtractedField(document_id=doc_record.id, field_name="Account Holder", field_value=filename.split(".")[0][:30], confidence=0.75))
-                
-                # Mock a small transaction so the dashboard isn't completely 0
-                db.add(BankTransaction(document_id=doc_record.id, date="2025-10-01", description="EXTRACTED_ENTRY", debit=5000, credit=15000, balance=10000))
-            
+                extracted_text=extracted_text_preview[:4000],
+            ))
             db.commit()
-            
+
+        # ── LLM Anomaly Detection ─────────────────────────────────────────
+        from app.services.anomaly_detection import run_anomaly_detection
+        from app.services.vendor_baseline import get_baseline, update_baseline
+
+        vendor_name = filename.split(".")[0][:40]   # no PII in prompt
+
+        fields_dict = {
+            "filename": filename,
+            "category": category,
+            "file_type": file_type,
+            "file_size_kb": round(len(content) / 1024, 1),
+            "text_preview": extracted_text_preview[:2000],
+        }
+
+        baseline = get_baseline(db, current_user.id, vendor_name, category)
+        detection = run_anomaly_detection(fields_dict, baseline)
+
+        for a in detection.get("anomalies", []):
+            db.add(Anomaly(
+                document_id=doc_record.id,
+                anomaly_type=a.get("type", "UNKNOWN").upper()[:50],
+                severity=a.get("severity", "low").upper(),
+                description=a.get("reason", "")[:500],
+                explanation=(
+                    f"Field: {a.get('field', '')} | "
+                    f"Value: {a.get('value', '')}"
+                ),
+                details_json=str(a),
+            ))
+
+        update_baseline(db, current_user.id, vendor_name, category, len(content))
+        db.commit()
+        # ─────────────────────────────────────────────────────────────────
+
         uploaded_docs.append(DocumentResponse.model_validate(doc_record))
+
         
     return uploaded_docs
 
@@ -181,8 +199,22 @@ def get_dashboard_overview(
         calculated_risk_score = risk_record.overall_score
         calculated_risk_level = risk_record.risk_level
     else:
-        calculated_risk_score = 72 if anomalies_count > 0 else 25
-        calculated_risk_level = "MODERATE" if anomalies_count > 0 else "LOW"
+        # Derive score from actual anomaly severities in the DB
+        from app.models.models import Anomaly as AnomalyModel
+        all_anomalies = (
+            db.query(AnomalyModel)
+            .join(Document)
+            .filter(Document.user_id == current_user.id)
+            .all()
+        )
+        severity_weights = {"HIGH": 20, "MEDIUM": 10, "LOW": 5}
+        raw_score = sum(severity_weights.get(a.severity, 5) for a in all_anomalies)
+        calculated_risk_score = min(100, raw_score) if all_anomalies else 10
+        calculated_risk_level = (
+            "HIGH" if calculated_risk_score >= 60 else
+            "MODERATE" if calculated_risk_score >= 30 else
+            "LOW"
+        )
 
     # Extract assessee details from ExtractedField
     assessee_name = db.query(ExtractedField.field_value).filter(ExtractedField.document_id.in_([d.id for d in user_docs]), ExtractedField.field_name == "Account Holder").scalar()
@@ -227,21 +259,29 @@ def get_risk_assessment(
     else:
         # Compute baseline score
         anomalies_count = db.query(Anomaly).join(Document).filter(Document.user_id == current_user.id).count()
-        score = 72 if anomalies_count > 0 else 25
-        level = "MODERATE" if anomalies_count > 0 else "LOW"
+        severity_weights = {"HIGH": 20, "MEDIUM": 10, "LOW": 5}
+        raw = sum(severity_weights.get(a.severity, 5) for a in
+                  db.query(Anomaly).join(Document)
+                  .filter(Document.user_id == current_user.id).all())
+        score = min(100, raw) if raw > 0 else 10
+        level = "HIGH" if score >= 60 else "MODERATE" if score >= 30 else "LOW"
+        user_docs = db.query(Document).filter(Document.user_id == current_user.id).all()
+        txs = db.query(BankTransaction).join(Document).filter(Document.user_id == current_user.id).all()
+        total_rev = sum(tx.credit for tx in txs)
+        total_exp = sum(tx.debit for tx in txs)
         return {
             "has_data": True,
             "overall_score": score,
             "risk_level": level,
-            "positive_factors": ["Basic documentation provided"],
-            "risk_factors": ["Anomalies detected requiring review"] if anomalies_count > 0 else [],
+            "positive_factors": ["Documentation uploaded and processed", "Active transactions recorded"] if anomalies_count == 0 else ["Documentation uploaded"],
+            "risk_factors": [f"{anomalies_count} anomalous patterns flagged for human review"] if anomalies_count > 0 else [],
             "breakdown": {
-                "cash_flow_stability": 75,
+                "cash_flow_stability": min(100, int((total_rev / max(total_exp, 1.0)) * 50)) if total_exp > 0 else 80,
                 "debt_burden": 70,
-                "revenue_consistency": 70,
-                "cross_document_consistency": 60 if anomalies_count > 0 else 90,
-                "transaction_anomalies": 50 if anomalies_count > 0 else 90,
-                "document_completeness": 80
+                "revenue_consistency": 75 if total_rev > 0 else 50,
+                "cross_document_consistency": 55 if anomalies_count > 0 else 90,
+                "transaction_anomalies": max(10, 100 - (anomalies_count * 15)),
+                "document_completeness": min(100, len(user_docs) * 25)
             }
         }
 
