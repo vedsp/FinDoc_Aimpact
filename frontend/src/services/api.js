@@ -1,8 +1,14 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1';
 
-export const getAuthToken = () => localStorage.getItem('findoc_token');
-export const setAuthToken = (token) => localStorage.setItem('findoc_token', token);
-export const removeAuthToken = () => localStorage.removeItem('findoc_token');
+export const getAuthToken = () => localStorage.getItem('findoc_token') || localStorage.getItem('token');
+export const setAuthToken = (token) => {
+  localStorage.setItem('findoc_token', token);
+  localStorage.setItem('token', token);
+};
+export const removeAuthToken = () => {
+  localStorage.removeItem('findoc_token');
+  localStorage.removeItem('token');
+};
 
 export const apiFetch = async (endpoint, options = {}) => {
   const token = getAuthToken();

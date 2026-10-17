@@ -67,107 +67,60 @@ export const ReportsPage = () => {
     return { hasData, legalName, pan, ay, totalCredits, gstTurnover, variance, riskScore, riskLevel, highValueAnomaly };
   };
 
-  const handleGenerateReport = () => {
-    setGenerating(true);
-    setGeneratedMsg(null);
-    const data = getDynamicData();
+  const handleExport = async () => {
+    const h = { Authorization: `Bearer ${localStorage.getItem('token')}` };
 
-    setTimeout(() => {
-      const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const navy = [11, 56, 97];
-      const muted = [85, 85, 85];
-      let y = 24;
+    const [dash, anomalies] = await Promise.all([
+      fetch('/api/v1/documents/dashboard/overview', { headers: h }).then(r => r.json()),
+      fetch('/api/v1/documents/anomalies/list',     { headers: h }).then(r => r.json()),
+    ]);
 
-      const footer = () => {
-        pdf.setDrawColor(204, 204, 204);
-        pdf.line(18, pageHeight - 18, pageWidth - 18, pageHeight - 18);
-        pdf.setFontSize(8);
-        pdf.setTextColor(...muted);
-        pdf.text('FinDocAI Statutory Audit System | Income Tax Assessment Dossier', 18, pageHeight - 11);
-        pdf.text(`Page ${pdf.getNumberOfPages()}`, pageWidth - 36, pageHeight - 11);
-      };
+    const doc = new jsPDF();
 
-      const section = (number, title, text) => {
-        const lines = pdf.splitTextToSize(text, pageWidth - 44);
-        const boxHeight = 14 + lines.length * 4.8;
-        if (y + boxHeight > pageHeight - 28) {
-          footer();
-          pdf.addPage();
-          y = 22;
-        }
-        pdf.setFillColor(255, 255, 255);
-        pdf.setDrawColor(204, 204, 204);
-        pdf.rect(18, y, pageWidth - 36, boxHeight, 'FD');
-        pdf.setFillColor(...navy);
-        pdf.rect(18, y, 3, boxHeight, 'F');
-        pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(10);
-        pdf.setTextColor(17, 17, 17);
-        pdf.text(`${number}. ${title}`, 24, y + 8);
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(9);
-        pdf.setTextColor(51, 51, 51);
-        pdf.text(lines, 24, y + 14, { lineHeightFactor: 1.35 });
-        y += boxHeight + 6;
-      };
+    // Header
+    doc.setFontSize(20); doc.setFont('helvetica', 'bold');
+    doc.text('FinDocAI - Financial Report', 20, 25);
+    doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+    doc.setTextColor(120);
+    doc.text(`Generated: ${new Date().toLocaleDateString('en-IN')}`, 20, 33);
+    doc.setTextColor(0);
 
-      pdf.setFillColor(...navy);
-      pdf.rect(0, 0, pageWidth, 42, 'F');
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(9);
-      pdf.setTextColor(230, 235, 240);
-      pdf.text('GOVERNMENT OF INDIA - INCOME TAX DEPARTMENT / STATUTORY AUDIT', 18, 14);
-      pdf.setFontSize(18);
-      pdf.setTextColor(255, 255, 255);
-      pdf.text('Form 3CD Tax Audit & Financial Assessment Dossier', 18, 24);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(8.5);
-      pdf.setTextColor(220, 230, 240);
-      pdf.text(`ASSESSMENT YEAR: ${data.ay}`, 18, 34);
+    // Entity details
+    doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+    doc.text('Entity Details', 20, 48);
+    doc.setFontSize(11); doc.setFont('helvetica', 'normal');
+    doc.text(`Name:   ${dash.assessee_name || 'N/A'}`, 20, 57);
+    doc.text(`PAN:    ${dash.assessee_pan  || 'N/A'}`, 20, 65);
+    doc.text(`GSTIN:  ${dash.assessee_gstin || 'N/A'}`, 20, 73);
 
-      y = 52;
-      pdf.setFontSize(8.5);
-      pdf.setTextColor(...muted);
-      pdf.text('ASSESSEE NAME:', 18, y);
-      pdf.text('PERMANENT ACCOUNT NUMBER (PAN):', 112, y);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(10);
-      pdf.setTextColor(17, 17, 17);
-      pdf.text(data.legalName, 18, y + 6);
-      pdf.text(data.pan, 112, y + 6);
-      y += 18;
+    // Financials
+    doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+    doc.text('Financial Summary', 20, 88);
+    doc.setFontSize(11); doc.setFont('helvetica', 'normal');
+    doc.text(`Documents Processed: ${dash.documents_processed}`, 20, 97);
+    doc.text(`Total Credits:   ₹${dash.total_revenue?.toLocaleString()}`, 20, 105);
+    doc.text(`Total Debits:    ₹${dash.total_expenses?.toLocaleString()}`, 20, 113);
+    doc.text(`Net Cash Flow:   ₹${dash.net_cash_flow?.toLocaleString()}`, 20, 121);
+    doc.text(`Risk Score: ${dash.risk_score} (${dash.risk_level})`, 20, 129);
 
-      if (!data.hasData) {
-        section(1, 'Executive Audit Summary', 'No financial documents uploaded. Assessment cannot be generated.');
-      } else {
-        section(1, 'Executive Audit Summary', `Automated financial document intelligence processing evaluated uploaded primary sources. Total annual bank credits were ${formatCurrency(data.totalCredits)}. Overall tax compliance audit rating is evaluated based on extracted evidence.`);
-        section(2, 'Schedule RC - Cross-Document Reconciliation', `A variance of ${formatCurrency(data.variance)} was detected between inflows and outflows. Recommended action: Verify bank receipts against capital contributions and loan accounts.`);
-        
-        if (data.highValueAnomaly) {
-          section(3, 'Transaction Anomaly Register', `Anomalous transaction flagged: ${data.highValueAnomaly.description}. Supporting vouchers to be obtained prior to ITR filing.`);
-        } else {
-          section(3, 'Transaction Anomaly Register', 'No significant transaction anomalies or exception payments flagged in the processed ledger.');
-        }
+    // Anomalies
+    doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+    doc.text('Anomalies Detected', 20, 144);
+    doc.setFontSize(10); doc.setFont('helvetica', 'normal');
 
-        section(4, 'Audit Risk Computation', `Overall Assessee Risk Metric computed at ${data.riskScore} / 100 (${data.riskLevel}).`);
-        section(5, 'Statutory Auditor Sign-off Guidance', `1) Verify reconciliation certificate for ${formatCurrency(data.variance)} variance. 2) File revised 3CD Annexure with central portal.`);
-      }
+    if (!anomalies.length) {
+      doc.text('No anomalies detected.', 20, 153);
+    } else {
+      anomalies.slice(0, 10).forEach((a, i) => {
+        const y = 153 + i * 12;
+        doc.setFont('helvetica', 'bold');
+        doc.text(`[${a.severity}]`, 20, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${a.anomaly_type} - ${a.description?.slice(0, 70)}`, 45, y);
+      });
+    }
 
-      if (y + 20 > pageHeight - 28) { footer(); pdf.addPage(); y = 24; }
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(8);
-      pdf.setTextColor(...muted);
-      pdf.text('DISCLAIMER UNDER IT RULES:', 18, y + 4);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(7.5);
-      pdf.text(pdf.splitTextToSize('This assessment dossier is generated for statutory audit reconciliation purposes in accordance with the Income Tax Act, 1961. Data sourced directly from uploaded primary accounts.', pageWidth - 36), 18, y + 9);
-      footer();
-      pdf.save(`Form_3CD_Audit_Dossier_${data.legalName.replace(/\s+/g, '_')}.pdf`);
-      setGenerating(false);
-      setGeneratedMsg("Form 3CD Tax Audit & Financial Assessment Dossier generated and downloaded successfully.");
-    }, 1200);
+    doc.save('FinDocAI_Report.pdf');
   };
 
   if (loading) {
@@ -189,14 +142,15 @@ export const ReportsPage = () => {
             Generate official computation summary, Schedule RC cross-verification notes, and exception register
           </p>
         </div>
-        <button
-          onClick={handleGenerateReport}
-          disabled={generating || !data.hasData}
-          className="btn-primary shrink-0"
-        >
-          {generating ? <Sparkles className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-          {generating ? 'Compiling Dossier...' : 'Download Form 3CD PDF'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleExport}
+            className="btn-primary shrink-0 flex items-center gap-1.5"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Export PDF
+          </button>
+        </div>
       </div>
 
       {generatedMsg && (
