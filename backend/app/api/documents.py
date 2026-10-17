@@ -19,7 +19,7 @@ from app.core import storage
 router = APIRouter(prefix="/documents", tags=["documents"])
 
 
-ALLOWED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".csv", ".xlsx", ".xls"}
+ALLOWED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tiff", ".csv", ".xlsx", ".xls"}
 MAX_FILE_SIZE = 25 * 1024 * 1024  # 25 MB limit
 
 @router.post("/upload", response_model=List[DocumentResponse], status_code=status.HTTP_201_CREATED)
@@ -37,7 +37,7 @@ async def upload_documents(
         if ext not in ALLOWED_EXTENSIONS:
             raise HTTPException(
                 status_code=400,
-                detail=f"Unsupported file format '{ext}'. Allowed formats: PDF, PNG, JPG, JPEG, CSV, XLSX."
+                detail=f"Unsupported file format '{ext}'. Allowed formats: PDF, PNG, JPG, JPEG, WEBP, CSV, XLSX."
             )
             
         # Read content and validate size
@@ -51,32 +51,10 @@ async def upload_documents(
         # Upload to storage (Supabase bucket or local disk)
         storage_path = storage.upload_file(content, filename)
 
-        # Extract initial raw text for classification
-        extracted_text_preview = ""
+        # ── Universal Extraction Engine (PyMuPDF + RapidOCR for Mobile Photos & Scans) ──
+        from app.services.ocr_service import extract_text_from_bytes
         file_type = ext.replace(".", "")
-        page_count = 1
-
-        if ext == ".pdf":
-            tmp_path = None
-            try:
-                import fitz
-                # Download to a temp file so fitz can open it (works for both Supabase and local)
-                tmp_path = storage.open_as_tempfile(storage_path, suffix=".pdf")
-                doc = fitz.open(tmp_path)
-                page_text_list = [page.get_text() for page in doc]
-                extracted_text_preview = " ".join(page_text_list)
-                page_count = len(doc)
-                doc.close()
-            except Exception:
-                extracted_text_preview = filename
-            finally:
-                if tmp_path and os.path.exists(tmp_path):
-                    try:
-                        os.remove(tmp_path)
-                    except OSError:
-                        pass
-        else:
-            extracted_text_preview = filename
+        extracted_text_preview, page_count = extract_text_from_bytes(content, filename)
             
         # Auto-classify document type
         category = classify_text_content(extracted_text_preview, filename)

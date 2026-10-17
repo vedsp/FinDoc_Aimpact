@@ -139,15 +139,15 @@ def _parse_gst_return(text: str, doc_id: int) -> list:
 # ─── Invoice Parsing ──────────────────────────────────────────────────────────
 
 def _parse_invoice(text: str, doc_id: int) -> list:
-    inv_no_m = re.search(r'Invoice No\.?[:\s]+([A-Z0-9/\-]+)', text, re.IGNORECASE)
-    total_m = re.search(r'INVOICE TOTAL\s*(?:Rs\.?|₹)?\s*([\d,]+(?:\.\d{2})?)', text, re.IGNORECASE)
-    if not total_m:
-        total_m = re.search(r'(?:Total Amount|Grand Total|Total)[:\s₹Rs.]*([\d,]+(?:\.\d{2})?)', text, re.IGNORECASE)
+    inv_no_m = re.search(r'Invoice\s*(?:No|Number|Na|N0|#)[.:\s]+([A-Z0-9/\-]+)', text, re.IGNORECASE)
+    total_m = re.search(r'(?:INVOICE\s*TOTAL|Grand\s*Total|Total\s*Amount|Total)[:\s₹Rs.]*([\d,]+(?:\.\d{2})?)', text, re.IGNORECASE)
 
-    taxable_m = re.search(r'Taxable value\s*(?:Rs\.?|₹)?\s*([\d,]+(?:\.\d{2})?)', text, re.IGNORECASE)
+    taxable_m = re.search(r'(?:Taxable\s*value|Taxable\s*Amount)[:\s₹Rs.]*([\d,]+(?:\.\d{2})?)', text, re.IGNORECASE)
     date_m = re.search(r'Date[:\s]+(\d{2}-[A-Za-z]{3}-\d{4}|\d{2}[-/]\d{2}[-/]\d{4})', text, re.IGNORECASE)
 
-    vendor_m = re.search(r'TAX INVOICE\s*\n\s*([A-Za-z0-9\s.,&/\(\)\-]{4,60})\s*\n', text, re.IGNORECASE)
+    vendor_m = re.search(r'(?:VENDOR|FROM|SUPPLIER)[:\s]+([A-Za-z0-9\s.,&/\(\)\-]{4,60})', text, re.IGNORECASE)
+    if not vendor_m:
+        vendor_m = re.search(r'TAX INVOICE\s*\n\s*([A-Za-z0-9\s.,&/\(\)\-]{4,60})\s*\n', text, re.IGNORECASE)
     vendor_name = vendor_m.group(1).strip() if vendor_m else "SOLVENT CHEMICAL SYNTHETICS PVT LTD"
 
     total = _clean_amt(total_m.group(1)) if total_m else 0.0

@@ -23,13 +23,13 @@ export const UploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
 
   const validateAndSetFiles = (selectedFiles) => {
     setError(null);
-    const validExtensions = ['pdf', 'png', 'jpg', 'jpeg', 'csv', 'xlsx'];
+    const validExtensions = ['pdf', 'png', 'jpg', 'jpeg', 'webp', 'bmp', 'tiff', 'csv', 'xlsx', 'xls'];
     const validFiles = [];
 
     for (const f of selectedFiles) {
       const ext = f.name.split('.').pop().toLowerCase();
       if (!validExtensions.includes(ext)) {
-        setError(`Unsupported file format '${ext}'. Select PDF, CSV, Excel, or Image files.`);
+        setError(`Unsupported file format '${ext}'. Select PDF, Image (JPG/PNG/WEBP), CSV, or Excel files.`);
         return;
       }
       if (f.size > 25 * 1024 * 1024) {
@@ -119,17 +119,17 @@ export const UploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
             <input
               type="file"
               multiple
-              accept=".pdf,.png,.jpg,.jpeg,.csv,.xlsx,.xls"
+              accept=".pdf,.png,.jpg,.jpeg,.webp,.bmp,.tiff,.csv,.xlsx,.xls,image/*"
               onChange={handleFileChange}
               className="hidden"
               id="file-upload-input"
             />
             <label htmlFor="file-upload-input" className="cursor-pointer block">
               <p className="font-bold text-[#0b3861]">
-                Click here to browse files or drag & drop documents
+                Click to browse files, drag & drop, or capture invoice photo with camera
               </p>
               <p className="text-[11px] text-[#666666] mt-0.5">
-                Supported formats: PDF, PNG, JPG, CSV, XLSX (Up to 25MB per file)
+                Supported: PDF, Scanned Bills & Mobile Photos (JPG, PNG, WEBP) — PyMuPDF + Neural OCR Enabled
               </p>
             </label>
           </div>
