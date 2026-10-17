@@ -3,9 +3,9 @@ import os
 from typing import Optional
 
 import httpx
+from app.core.config import settings
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-MODEL = "llama3-8b-8192"
+MODEL = "openai/gpt-oss-120b"
 
 SYSTEM_PROMPT = """You are a financial document anomaly detector.
 Input: JSON of extracted fields from one document, plus a JSON vendor baseline (may be null).
@@ -36,7 +36,8 @@ def run_anomaly_detection(
         {"anomalies": [...], "risk": 0-100}
         Falls back to {"anomalies": [], "risk": 0} on any error.
     """
-    if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_key_here":
+    api_key = settings.GROQ_API_KEY
+    if not api_key or api_key == "your_groq_key_here":
         return {"anomalies": [], "risk": 0, "error": "GROQ_API_KEY not configured"}
 
     payload = {
@@ -48,7 +49,7 @@ def run_anomaly_detection(
         resp = httpx.post(
             "https://api.groq.com/openai/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
             },
             json={

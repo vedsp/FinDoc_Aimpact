@@ -64,6 +64,9 @@ class DashboardOverview(BaseModel):
     category_counts: Dict[str, int]
     recent_documents: List[DocumentResponse]
     active_alerts_count: int
+    assessee_name: Optional[str] = None
+    assessee_pan: Optional[str] = None
+    assessee_gstin: Optional[str] = None
 
 # --- General Message Schema ---
 class MessageResponse(BaseModel):

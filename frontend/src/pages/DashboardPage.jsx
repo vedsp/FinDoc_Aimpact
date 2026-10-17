@@ -100,9 +100,9 @@ export const DashboardPage = ({ onNavigate, onOpenUpload, onViewDetail, refreshT
 
         // Derive assessee identity from document filenames (heuristic matching)
         const allNames = docs.map(d => (d.original_name || d.filename || '').toLowerCase()).join(' ');
-        let legalName = overview.assessee_name || '—';
-        let pan = overview.assessee_pan || '—';
-        let gstin = overview.assessee_gstin || '—';
+        let legalName = overview?.assessee_name || '—';
+        let pan = overview?.assessee_pan || '—';
+        let gstin = overview?.assessee_gstin || '—';
         let filingStatus = null;
 
         if (hasData) {
