@@ -125,56 +125,47 @@ export const ReportsPage = () => {
       const riskLevel = dash.risk_level || data.riskLevel || 'HIGH';
 
       // ─── PAGE 1 ───
-      // Top Tricolor Accent Bar
-      doc.setFillColor(255, 153, 51); // Saffron
-      doc.rect(0, 0, pageWidth, 2.5, 'F');
-      doc.setFillColor(11, 56, 97); // Navy Blue
-      doc.rect(0, 2.5, pageWidth, 2.5, 'F');
-      doc.setFillColor(19, 136, 8); // Green
-      doc.rect(0, 5, pageWidth, 2.5, 'F');
+      // Top Navy accent bar (FinDocAI branded, no tricolor)
+      doc.setFillColor(11, 56, 97);
+      doc.rect(0, 0, pageWidth, 4, 'F');
 
-      // Government Emblem / Header Banner Box
+      // Header Banner Box
       doc.setFillColor(248, 250, 252);
-      doc.rect(14, 11, pageWidth - 28, 28, 'F');
+      doc.rect(14, 8, pageWidth - 28, 28, 'F');
       doc.setDrawColor(203, 213, 225);
       doc.setLineWidth(0.4);
-      doc.rect(14, 11, pageWidth - 28, 28, 'S');
+      doc.rect(14, 8, pageWidth - 28, 28, 'S');
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       doc.setTextColor(11, 56, 97);
-      doc.text('GOVERNMENT OF INDIA · INCOME TAX DEPARTMENT', pageWidth / 2, 17, { align: 'center' });
-
-      doc.setFontSize(8);
-      doc.setTextColor(71, 85, 105);
-      doc.setFont('helvetica', 'normal');
-      doc.text('CENTRAL BOARD OF DIRECT TAXES · DIRECTORATE GENERAL OF SYSTEMS', pageWidth / 2, 22, { align: 'center' });
+      doc.text('FinDocAI · Financial Audit & Tax Reconciliation Workstation', pageWidth / 2, 15, { align: 'center' });
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10.5);
       doc.setTextColor(15, 23, 42);
-      doc.text('FORM NO. 3CD — STATEMENT OF PARTICULARS UNDER SECTION 44AB', pageWidth / 2, 28, { align: 'center' });
+      doc.text('FORM NO. 3CD — STATEMENT OF PARTICULARS UNDER SECTION 44AB', pageWidth / 2, 22, { align: 'center' });
 
       doc.setFontSize(8);
       doc.setTextColor(100, 116, 139);
       doc.setFont('helvetica', 'normal');
-      doc.text('Statutory Tax Audit Working Paper & Forensic Cross-Verification Dossier (AY 2027-28)', pageWidth / 2, 33, { align: 'center' });
+      doc.text('Statutory Tax Audit Working Paper & Forensic Cross-Verification Dossier (AY 2027-28)', pageWidth / 2, 29, { align: 'center' });
 
-      // DIN & Barcode Reference Strip
+      // DIN & Reference Strip
       doc.setFillColor(241, 245, 249);
-      doc.rect(14, 41, pageWidth - 28, 7, 'F');
+      doc.rect(14, 38, pageWidth - 28, 7, 'F');
       doc.setDrawColor(226, 232, 240);
-      doc.rect(14, 41, pageWidth - 28, 7, 'S');
+      doc.rect(14, 38, pageWidth - 28, 7, 'S');
       doc.setFontSize(7.5);
       doc.setFont('courier', 'bold');
       doc.setTextColor(51, 65, 85);
-      doc.text(`DIN: ITBA/COM/2026-27/44AB/${pan}/001`, 18, 45.5);
-      doc.text(`E-FILING ACK NO: 882947192018471`, pageWidth / 2 - 15, 45.5);
-      doc.text(`DATE: ${new Date().toLocaleDateString('en-IN')}`, pageWidth - 45, 45.5);
+      doc.text(`DIN: ITBA/COM/2026-27/44AB/${pan}/001`, 18, 42.5);
+      doc.text(`E-FILING ACK NO: 882947192018471`, pageWidth / 2 - 15, 42.5);
+      doc.text(`DATE: ${new Date().toLocaleDateString('en-IN')}`, pageWidth - 45, 42.5);
 
       // PART A: General Particulars (Section 44AB Table)
       autoTable(doc, {
-        startY: 50,
+        startY: 47,
         margin: { left: 14, right: 14 },
         head: [['Clause', 'PART A: GENERAL PARTICULARS (Rule 6G / Sec 44AB)', 'Assessee Particulars / Working Paper Record']],
         body: [
@@ -253,26 +244,25 @@ export const ReportsPage = () => {
       // Footer for Page 1
       doc.setFontSize(7);
       doc.setTextColor(148, 163, 184);
-      doc.text('FORM 3CD (AY 2027-28) · GOVERNMENT OF INDIA · CENTRAL BOARD OF DIRECT TAXES', 14, pageHeight - 8);
+      doc.text('FinDocAI Statutory Audit Workstation · Form 3CD (AY 2027-28) · Confidential Working Paper', 14, pageHeight - 8);
       doc.text('Page 1 of 2', pageWidth - 25, pageHeight - 8);
 
       // ─── PAGE 2: PART D (ANOMALIES) & PART E (AUDITOR VERIFICATION) ───
       doc.addPage();
 
-      // Top Tricolor Accent Bar
-      doc.setFillColor(255, 153, 51); doc.rect(0, 0, pageWidth, 2.5, 'F');
-      doc.setFillColor(11, 56, 97);  doc.rect(0, 2.5, pageWidth, 2.5, 'F');
-      doc.setFillColor(19, 136, 8);  doc.rect(0, 5, pageWidth, 2.5, 'F');
+      // Top Navy accent bar (page 2)
+      doc.setFillColor(11, 56, 97);
+      doc.rect(0, 0, pageWidth, 4, 'F');
 
       // Page 2 Sub-header
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.setTextColor(11, 56, 97);
-      doc.text('FORM NO. 3CD — ANNEXURE II: SCHEDULE OF EXCEPTIONS & AUDIT FINDINGS', 14, 15);
+      doc.text('FORM NO. 3CD — ANNEXURE II: SCHEDULE OF EXCEPTIONS & AUDIT FINDINGS', 14, 12);
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(100, 116, 139);
-      doc.text(`Assessee: ${legalName} | PAN: ${pan} | AY: 2027-28`, 14, 20);
+      doc.text(`Assessee: ${legalName} | PAN: ${pan} | AY: 2027-28`, 14, 18);
 
       // PART D: Anomalies Table
       const anomList = anomaliesList && anomaliesList.length > 0 ? anomaliesList : [
@@ -369,7 +359,7 @@ export const ReportsPage = () => {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7);
       doc.setTextColor(148, 163, 184);
-      doc.text('FORM 3CD (AY 2027-28) · GOVERNMENT OF INDIA · CENTRAL BOARD OF DIRECT TAXES', 14, pageHeight - 8);
+      doc.text('FinDocAI Statutory Audit Workstation · Form 3CD (AY 2027-28) · Confidential Working Paper', 14, pageHeight - 8);
       doc.text('Page 2 of 2', pageWidth - 25, pageHeight - 8);
 
       doc.save(`Form_3CD_${legalName.replace(/\s+/g, '_')}_AY2027-28.pdf`);
