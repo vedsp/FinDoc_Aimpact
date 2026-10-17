@@ -5,7 +5,8 @@ export default function AnalysisPage() {
   const [dupes, setDupes]             = useState([]);
   const [loading, setLoading]         = useState(true);
 
-  const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` };
+  const token = localStorage.getItem('findoc_token') || localStorage.getItem('token') || '';
+  const headers = { Authorization: `Bearer ${token}` };
 
   useEffect(() => {
     Promise.all([
