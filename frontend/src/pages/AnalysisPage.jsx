@@ -1,107 +1,101 @@
-import React from 'react';
-import { GitCompare, AlertTriangle, CheckCircle2, ShieldCheck, HelpCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
-export const AnalysisPage = () => {
+export default function AnalysisPage() {
+  const [crossVerify, setCrossVerify] = useState(null);
+  const [dupes, setDupes]             = useState([]);
+  const [loading, setLoading]         = useState(true);
+
+  const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` };
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/v1/analysis/cross-verify', { headers }).then(r => r.json()),
+      fetch('/api/v1/analysis/duplicates',   { headers }).then(r => r.json()),
+    ]).then(([cv, dup]) => {
+      setCrossVerify(cv);
+      setDupes(dup.duplicates || []);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) return <div className="p-8 text-gray-500">Loading analysis...</div>;
+
   return (
-    <div className="space-y-4">
-      {/* Title & Metadata Banner */}
-      <div className="bg-white border border-[#cccccc] p-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <h2 className="text-sm font-bold text-[#222222] uppercase tracking-wide flex items-center gap-1.5">
-              <GitCompare className="w-4 h-4 text-[#0b3861]" />
-              Schedule RC: Cross-Document Inter-Ledger Reconciliation
-            </h2>
-            <p className="text-xs text-[#555555]">
-              Automated reconciliation of Bank Statements vs. GSTR-3B Taxable Turnover vs. Uploaded Invoices
-            </p>
-          </div>
-          <div className="text-xs text-[#555555] font-mono">
-            Status: <span className="text-warning">1 VARIANCE FLAGGED</span>
-          </div>
-        </div>
-      </div>
+    <div className="p-8 space-y-8 max-w-5xl">
+      <h2 className="text-2xl font-bold">Cross-Document Verification</h2>
 
-      {/* Primary Reconciliation Table */}
-      <div className="bg-white border border-[#cccccc]">
-        <div className="bg-[#f2f4f7] px-3 py-2 border-b border-[#cccccc] flex items-center justify-between">
-          <span className="text-xs font-bold text-[#222222] uppercase tracking-wide">
-            Table 1: Turnover & Revenue Reconciliation Summary (AY 2026-27)
-          </span>
-          <span className="text-[11px] text-[#555555]">All figures in INR (₹)</span>
+      {/* Bank vs GST vs Invoice card */}
+      {crossVerify && (
+        <div className="bg-white rounded-2xl shadow p-6">
+          <h3 className="font-semibold text-lg mb-4">Bank vs GST vs Invoices</h3>
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <div className="bg-blue-50 rounded-xl p-4 text-center">
+              <div className="text-xs text-gray-500 mb-1">Bank Credits</div>
+              <div className="text-2xl font-bold text-blue-700">
+                ₹{crossVerify.bank_credits?.toLocaleString()}
+              </div>
+            </div>
+            <div className="bg-green-50 rounded-xl p-4 text-center">
+              <div className="text-xs text-gray-500 mb-1">GST Turnover</div>
+              <div className="text-2xl font-bold text-green-700">
+                ₹{crossVerify.gst_turnover?.toLocaleString()}
+              </div>
+            </div>
+            <div className="bg-purple-50 rounded-xl p-4 text-center">
+              <div className="text-xs text-gray-500 mb-1">Invoice Total</div>
+              <div className="text-2xl font-bold text-purple-700">
+                ₹{crossVerify.invoice_total?.toLocaleString()}
+              </div>
+            </div>
+          </div>
+          {crossVerify.flag && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm">
+              ⚠ Discrepancy detected: Bank credits exceed GST turnover by
+              ₹{Math.abs(crossVerify.bank_gst_diff)?.toLocaleString()}
+            </div>
+          )}
         </div>
-        <div className="overflow-x-auto">
-          <table className="itr-grid">
+      )}
+
+      {/* Duplicate Invoices card */}
+      <div className="bg-white rounded-2xl shadow p-6">
+        <h3 className="font-semibold text-lg mb-4">
+          Duplicate Invoices
+          {dupes.length > 0 && (
+            <span className="ml-2 bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full">
+              {dupes.length} found
+            </span>
+          )}
+        </h3>
+        {dupes.length === 0 ? (
+          <div className="text-gray-400 text-sm">No duplicate invoices found ✓</div>
+        ) : (
+          <table className="w-full text-sm">
             <thead>
-              <tr>
-                <th style={{ width: '40px' }}>Sr.</th>
-                <th>Reconciliation Stream / Heads</th>
-                <th>Source Primary Document</th>
-                <th>Declared / Computed Amount (₹)</th>
-                <th>Benchmark / Control Figure (₹)</th>
-                <th>Variance (₹)</th>
-                <th>Assessment & Remarks</th>
+              <tr className="text-gray-500 border-b">
+                <th className="text-left pb-2">Original</th>
+                <th className="text-left pb-2">Duplicate</th>
+                <th className="text-left pb-2">Vendor</th>
+                <th className="text-right pb-2">Amount</th>
+                <th className="text-left pb-2">Date</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td className="text-center font-mono">1</td>
-                <td className="font-semibold text-[#111111]">Bank Inflows vs. Reported GST Turnover</td>
-                <td>HDFC Bank Statement (Annual Credits) vs. GSTR-3B</td>
-                <td className="text-right font-mono">18,70,000.00</td>
-                <td className="text-right font-mono">14,80,000.00</td>
-                <td className="text-right font-mono text-warning font-bold">+3,90,000.00 (26.3%)</td>
-                <td>
-                  <span className="text-warning font-bold flex items-center gap-1">
-                    <AlertTriangle className="w-3.5 h-3.5 inline text-[#b45309]" />
-                    Variance Flagged: Bank credits exceed GST turnover by ₹3.90L. Verify non-taxable receipts / capital inflows.
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td className="text-center font-mono">2</td>
-                <td className="font-semibold text-[#111111]">GSTR-3B Turnover vs. Issued Invoices Total</td>
-                <td>GSTR-3B Monthly Filings vs. Verified Invoice Set</td>
-                <td className="text-right font-mono">14,80,000.00</td>
-                <td className="text-right font-mono">16,20,000.00</td>
-                <td className="text-right font-mono text-positive">-1,40,000.00 (8.6%)</td>
-                <td>
-                  <span className="text-positive font-bold flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 inline text-[#15803d]" />
-                    Consistent Match within statutory 10% variance tolerance threshold.
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td className="text-center font-mono">3</td>
-                <td className="font-semibold text-[#111111]">TDS 26AS Deductions vs. Bank Receipts</td>
-                <td>Form 26AS Tax Deducted at Source vs. Bank Inward RTGS</td>
-                <td className="text-right font-mono">1,87,000.00</td>
-                <td className="text-right font-mono">1,87,000.00</td>
-                <td className="text-right font-mono text-positive">0.00 (0.0%)</td>
-                <td>
-                  <span className="text-positive font-bold flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5 inline text-[#15803d]" />
-                    Fully Reconciled with TRACES 26AS central tax ledger.
-                  </span>
-                </td>
-              </tr>
+              {dupes.map((d, i) => (
+                <tr key={i} className="border-b last:border-0">
+                  <td className="py-2 text-blue-600">{d.original}</td>
+                  <td className="py-2 text-red-600">{d.duplicate}</td>
+                  <td className="py-2">{d.vendor}</td>
+                  <td className="py-2 text-right">₹{d.amount?.toLocaleString()}</td>
+                  <td className="py-2 text-gray-400">{d.date}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      {/* Statutory Auditor Note / Notice Box */}
-      <div className="bg-white border border-[#cccccc] p-3 text-xs space-y-2">
-        <div className="font-bold text-[#0b3861] uppercase flex items-center gap-1">
-          <HelpCircle className="w-3.5 h-3.5" />
-          Auditor Verification Guidance & Action Item (Under Rule 114E / Section 142(1)):
-        </div>
-        <p className="text-[#333333] leading-relaxed">
-          Where bank deposits/credits exceed declared GST taxable sales by more than 15%, the taxpayer should maintain a reconciliation statement distinguishing between taxable turnover, exempt supplies, capital contributions, and loan receipts to prevent automated notice generation under Section 148A.
-        </p>
+        )}
       </div>
     </div>
   );
-};
+}
 
+export { AnalysisPage };
