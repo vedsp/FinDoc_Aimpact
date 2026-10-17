@@ -31,19 +31,19 @@ export const Navbar = ({ onDemoLoaded, refreshTrigger }) => {
   const [demoMessage, setDemoMessage] = useState(null);
   const [financialYears, setFinancialYears] = useState([]);
   const [selectedFinancialYear, setSelectedFinancialYear] = useState('');
-  const [assesseeInfo, setAssesseeInfo] = useState({ name: '—', pan: '—' });
+  const [assesseeInfo, setAssesseeInfo] = useState({ name: '—', pan: '' });
 
   useEffect(() => {
     let active = true;
     Promise.all([
       documentApi.list().catch(() => []),
-      documentApi.getOverview().catch(() => null)
+      documentApi.getDashboardOverview().catch(() => null)
     ]).then(([documents, overview]) => {
       if (!active) return;
       if (documents.length === 0) {
         setFinancialYears([]);
         setSelectedFinancialYear('');
-        setAssesseeInfo({ name: user?.full_name || 'No Entity Active', pan: '—' });
+        setAssesseeInfo({ name: user?.full_name || 'No Entity Active', pan: '' });
         return;
       }
       const years = [...new Set(documents.map(getFinancialYear))].sort().reverse();
@@ -56,7 +56,7 @@ export const Navbar = ({ onDemoLoaded, refreshTrigger }) => {
       if (!name || name === '—') {
         const allNames = documents.map(d => (d.original_name || d.filename || '').toLowerCase()).join(' ');
         if (allNames.includes('aarti')) {
-          name = 'Aarti Industries Ltd';
+          name = 'AARTI INDUSTRIES LTD';
           pan = pan || 'AAACA1234F';
         } else if (allNames.includes('mahalaxmi')) {
           name = 'Mahalaxmi Traders Pvt Ltd';
@@ -70,8 +70,8 @@ export const Navbar = ({ onDemoLoaded, refreshTrigger }) => {
       }
 
       setAssesseeInfo({
-        name: name || 'Enterprise Active',
-        pan: pan && pan !== '—' ? pan : 'PAN PENDING'
+        name: name || 'Active Entity',
+        pan: pan && pan !== '—' ? pan : ''
       });
     }).catch(() => {});
     return () => { active = false; };
@@ -170,7 +170,7 @@ export const Navbar = ({ onDemoLoaded, refreshTrigger }) => {
         </div>
 
         <span className="text-slate-400">|</span>
-        <span className="text-slate-700 font-medium">Assessee: <strong className="text-slate-900">{assesseeInfo.name}</strong> {assesseeInfo.pan && assesseeInfo.pan !== '—' ? `(PAN: ${assesseeInfo.pan})` : ''}</span>
+        <span className="text-slate-600">Assessee: <strong className="text-slate-900">{assesseeInfo.name}</strong> {assesseeInfo.pan ? `(PAN: ${assesseeInfo.pan})` : ''}</span>
       </div>
       
       <div className="flex items-center gap-2">
