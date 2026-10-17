@@ -77,7 +77,9 @@ export const documentApi = {
   getDashboardOverview: () => apiFetch('/documents/dashboard/overview'),
   getRiskAssessment: () => apiFetch('/documents/risk/assessment'),
   getAnomalies: () => apiFetch('/documents/anomalies/list'),
-  clearSessionDocuments: () => apiFetch('/documents/session/clear', { method: 'DELETE' })
+  clearSessionDocuments: () => apiFetch('/documents/session/clear', { method: 'DELETE' }),
+  getAuditHistory: () => apiFetch('/documents/audit-history'),
+  saveAuditSnapshot: () => apiFetch('/documents/audit-history/save', { method: 'POST' })
 };
 
 

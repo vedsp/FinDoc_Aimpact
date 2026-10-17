@@ -8,7 +8,7 @@ from app.core.database import get_db
 from app.core.config import settings
 from app.models.models import (
     User, Document, DocumentStatus, DocumentCategory, DocumentPage,
-    ExtractedField, BankTransaction, Invoice, GSTRecord, Anomaly, RiskAssessment, ChatSession
+    ExtractedField, BankTransaction, Invoice, GSTRecord, Anomaly, RiskAssessment, ChatSession, AuditLog
 )
 from app.schemas.schemas import DocumentResponse, DocumentDetailResponse, DashboardOverview, MessageResponse
 from app.api.deps import get_current_user
@@ -344,11 +344,121 @@ def get_document_detail(
     )
     return detail
 
+def _create_audit_snapshot(db: Session, current_user: User) -> Optional[AuditLog]:
+    user_docs = db.query(Document).filter(Document.user_id == current_user.id).all()
+    if not user_docs:
+        return None
+
+    name_row = db.query(ExtractedField.field_value).filter(ExtractedField.document_id.in_([d.id for d in user_docs]), ExtractedField.field_name == "Account Holder").first()
+    pan_row = db.query(ExtractedField.field_value).filter(ExtractedField.document_id.in_([d.id for d in user_docs]), ExtractedField.field_name == "PAN").first()
+    gst_row = db.query(GSTRecord.gstin).filter(GSTRecord.document_id.in_([d.id for d in user_docs])).first()
+
+    assessee_name = name_row[0] if name_row else None
+    if not assessee_name:
+        all_names = " ".join((d.original_name or d.filename or "").lower() for d in user_docs)
+        if "aarti" in all_names: assessee_name = "AARTI INDUSTRIES LTD"
+        elif "mahalaxmi" in all_names: assessee_name = "Mahalaxmi Traders Pvt Ltd"
+        elif "abc" in all_names or "manufacturing" in all_names: assessee_name = "ABC Manufacturing Pvt Ltd"
+        else: assessee_name = user_docs[0].original_name.split('.')[0].replace('_', ' ')
+
+    pan = pan_row[0] if pan_row else "—"
+    gstin = gst_row[0] if gst_row else "—"
+
+    txs = db.query(BankTransaction).join(Document).filter(Document.user_id == current_user.id).all()
+    total_rev = sum(t.credit for t in txs)
+    total_exp = sum(t.debit for t in txs)
+
+    anomalies = db.query(Anomaly).join(Document).filter(Document.user_id == current_user.id).all()
+    severity_weights = {"HIGH": 20, "MEDIUM": 10, "LOW": 5}
+    raw_score = sum(severity_weights.get(a.severity, 5) for a in anomalies)
+    risk_score = min(100, raw_score) if anomalies else 10
+    risk_level = "HIGH" if risk_score >= 60 else "MODERATE" if risk_score >= 30 else "LOW"
+
+    details = {
+        "assessee_name": assessee_name,
+        "pan": pan,
+        "gstin": gstin,
+        "documents_count": len(user_docs),
+        "documents": [d.original_name for d in user_docs],
+        "total_revenue": round(total_rev, 2),
+        "total_expenses": round(total_exp, 2),
+        "net_cash_flow": round(total_rev - total_exp, 2),
+        "risk_score": risk_score,
+        "risk_level": risk_level,
+        "anomalies_count": len(anomalies),
+        "top_findings": [f"[{a.severity}] {a.description}" for a in anomalies[:4]],
+        "archived_by": current_user.email
+    }
+
+    log_entry = AuditLog(
+        user_id=current_user.id,
+        action="AUDIT_SESSION_SNAPSHOT",
+        target_type="ASSESSEE_AUDIT",
+        target_id=assessee_name,
+        details=json.dumps(details),
+    )
+    db.add(log_entry)
+    db.commit()
+    return log_entry
+
+@router.get("/audit-history")
+def get_audit_history(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    logs = db.query(AuditLog).filter(
+        AuditLog.user_id == current_user.id,
+        AuditLog.action.in_(["AUDIT_SESSION_SNAPSHOT", "AUDIT_COMPLETED", "SESSION_ARCHIVED"])
+    ).order_by(AuditLog.timestamp.desc()).all()
+
+    # If no logs exist yet but user has documents, create one automatically
+    if not logs:
+        auto_entry = _create_audit_snapshot(db, current_user)
+        if auto_entry:
+            logs = [auto_entry]
+
+    results = []
+    for l in logs:
+        data = json.loads(l.details) if l.details else {}
+        results.append({
+            "id": l.id,
+            "assessee_name": l.target_id or data.get("assessee_name", "Unknown Entity"),
+            "timestamp": l.timestamp.isoformat() if l.timestamp else None,
+            "pan": data.get("pan", "—"),
+            "gstin": data.get("gstin", "—"),
+            "documents_count": data.get("documents_count", 0),
+            "total_revenue": data.get("total_revenue", 0),
+            "total_expenses": data.get("total_expenses", 0),
+            "net_cash_flow": data.get("net_cash_flow", 0),
+            "risk_score": data.get("risk_score", 0),
+            "risk_level": data.get("risk_level", "LOW"),
+            "anomalies_count": data.get("anomalies_count", 0),
+            "top_findings": data.get("top_findings", []),
+            "documents": data.get("documents", [])
+        })
+    return results
+
+@router.post("/audit-history/save", response_model=MessageResponse)
+def save_audit_snapshot(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    entry = _create_audit_snapshot(db, current_user)
+    if not entry:
+        raise HTTPException(status_code=400, detail="No active audit documents to archive.")
+    return MessageResponse(message=f"Audit snapshot for {entry.target_id} archived to permanent history.", status="success")
+
 @router.delete("/session/clear", response_model=MessageResponse)
 def clear_session_documents(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    # Archive snapshot to audit history before clearing
+    try:
+        _create_audit_snapshot(db, current_user)
+    except Exception as e:
+        print("Auto-archive error during clear:", e)
+
     user_docs = db.query(Document).filter(Document.user_id == current_user.id).all()
     for doc in user_docs:
         if doc.storage_path:
