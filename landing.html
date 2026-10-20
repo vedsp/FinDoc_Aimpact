@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinDocAI – AI-Powered Financial Document Review</title>
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --brand:       #1565c0;
+      --brand-light: #1e88e5;
+      --brand-dark:  #0d47a1;
+      --accent:      #00bcd4;
+      --surface:     #f0f4ff;
+      --card-bg:     #ffffff;
+      --text-muted:  #6b7280;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      overflow-x: hidden;
+    }
+
+    /* ── NAVBAR ── */
+    .navbar {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(21, 101, 192, 0.1);
+      padding: 0.9rem 0;
+    }
+    .navbar-brand img { height: 38px; }
+    .nav-link { font-weight: 500; color: #374151 !important; }
+    .nav-link:hover { color: var(--brand) !important; }
+    .btn-nav {
+      background: var(--brand);
+      color: #fff !important;
+      border-radius: 8px;
+      padding: 0.45rem 1.3rem;
+      font-weight: 600;
+      transition: background .2s;
+    }
+    .btn-nav:hover { background: var(--brand-dark) !important; }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 92vh;
+      background: linear-gradient(135deg, #0d47a1 0%, #1565c0 40%, #1e88e5 75%, #00bcd4 100%);
+      position: relative;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 50px;
+      padding: 0.35rem 1rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 1.4rem;
+    }
+    .hero h1 {
+      font-size: clamp(2.4rem, 5vw, 3.8rem);
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.15;
+      margin-bottom: 1.2rem;
+    }
+    .hero h1 span { color: #b3e5fc; }
+    .hero p.lead {
+      color: rgba(255,255,255,0.88);
+      font-size: 1.15rem;
+      max-width: 540px;
+      line-height: 1.7;
+      margin-bottom: 2.2rem;
+    }
+    .btn-download {
+      background: #fff;
+      color: var(--brand-dark);
+      font-weight: 700;
+      font-size: 1.05rem;
+      border-radius: 12px;
+      padding: 0.85rem 2.2rem;
+      border: none;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+      transition: all .25s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: .6rem;
+    }
+    .btn-download:hover {
+      background: var(--brand-dark);
+      color: #fff;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    }
+    .btn-demo {
+      background: transparent;
+      color: #fff;
+      font-weight: 600;
+      font-size: 1rem;
+      border-radius: 12px;
+      padding: 0.85rem 2rem;
+      border: 2px solid rgba(255,255,255,0.55);
+      transition: all .25s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: .6rem;
+    }
+    .btn-demo:hover {
+      background: rgba(255,255,255,0.15);
+      border-color: #fff;
+      color: #fff;
+    }
+
+    /* hero mockup card */
+    .hero-card {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      color: #fff;
+    }
+    .hero-stat {
+      text-align: center;
+      padding: 1rem 0.5rem;
+    }
+    .hero-stat .num {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #b3e5fc;
+      display: block;
+    }
+    .hero-stat .lbl { font-size: 0.78rem; color: rgba(255,255,255,0.75); }
+
+    /* ── WAVE ── */
+    .wave-divider svg { display: block; }
+
+    /* ── FEATURES ── */
+    .section-tag {
+      display: inline-block;
+      background: #e3f2fd;
+      color: var(--brand);
+      border-radius: 50px;
+      padding: 0.3rem 1rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.8rem;
+    }
+    .feature-card {
+      border: none;
+      border-radius: 18px;
+      padding: 2rem 1.8rem;
+      background: #fff;
+      box-shadow: 0 2px 16px rgba(21, 101, 192, 0.07);
+      transition: transform .25s, box-shadow .25s;
+      height: 100%;
+    }
+    .feature-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 40px rgba(21, 101, 192, 0.14);
+    }
+    .feature-icon {
+      width: 56px; height: 56px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem;
+      margin-bottom: 1.2rem;
+    }
+    .feature-card h5 { font-weight: 700; font-size: 1.05rem; margin-bottom: .5rem; }
+    .feature-card p  { color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin: 0; }
+
+    /* ── HOW IT WORKS ── */
+    .hiw-section { background: var(--surface); }
+    .step-circle {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: var(--brand);
+      color: #fff;
+      font-size: 1.3rem;
+      font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1rem;
+      box-shadow: 0 4px 16px rgba(21, 101, 192, 0.3);
+    }
+    .step-connector {
+      width: 100%; height: 3px;
+      background: linear-gradient(90deg, var(--brand), var(--accent));
+      border-radius: 3px;
+      margin: 0 auto;
+    }
+
+    /* ── TECH STACK ── */
+    .tech-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      background: #fff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 0.55rem 1.1rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #374151;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .tech-badge:hover {
+      border-color: var(--brand-light);
+      box-shadow: 0 4px 16px rgba(21, 101, 192, 0.12);
+    }
+    .tech-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+    /* ── DOWNLOAD SECTION ── */
+    .download-section {
+      background: linear-gradient(135deg, #0d47a1, #1e88e5);
+      color: #fff;
+    }
+    .download-box {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 3rem 2.5rem;
+      backdrop-filter: blur(8px);
+    }
+    .btn-dl-main {
+      background: #fff;
+      color: var(--brand-dark);
+      font-weight: 700;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      padding: 1rem 2.5rem;
+      border: none;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+      transition: all .25s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: .7rem;
+    }
+    .btn-dl-main:hover {
+      background: var(--brand-dark);
+      color: #fff;
+      transform: translateY(-3px);
+      box-shadow: 0 10px 36px rgba(0,0,0,0.3);
+    }
+    .dl-meta {
+      color: rgba(255,255,255,0.7);
+      font-size: 0.85rem;
+      margin-top: 1rem;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: #0a1929;
+      color: rgba(255,255,255,0.6);
+    }
+    footer .brand-footer { color: #fff; font-weight: 700; font-size: 1.1rem; }
+    footer a { color: rgba(255,255,255,0.5); text-decoration: none; }
+    footer a:hover { color: #fff; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .float-anim { animation: float 4s ease-in-out infinite; }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     NAVBAR
+══════════════════════════════════════════ -->
+<nav class="navbar navbar-expand-lg sticky-top">
+  <div class="container">
+    <a class="navbar-brand" href="#">
+      <img src="https://raw.githubusercontent.com/vedsp/FinDocAi/main/logo-wide.png" alt="FinDocAI Logo" />
+    </a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto mb-2 mb-lg-0 gap-1 align-items-lg-center">
+        <li class="nav-item"><a class="nav-link px-3" href="#features">Features</a></li>
+        <li class="nav-item"><a class="nav-link px-3" href="#how-it-works">How It Works</a></li>
+        <li class="nav-item"><a class="nav-link px-3" href="#tech">Tech Stack</a></li>
+        <li class="nav-item ms-lg-2">
+          <a class="nav-link btn-nav" href="#download">
+            <i class="bi bi-download me-1"></i>Download
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════
+     HERO
+══════════════════════════════════════════ -->
+<section class="hero py-5">
+  <div class="container py-5 position-relative">
+    <div class="row align-items-center g-5">
+
+      <!-- Left -->
+      <div class="col-lg-6">
+        <div class="hero-badge"><i class="bi bi-lightning-charge-fill me-1"></i> SIH 2026 · Team FinDocAI</div>
+        <h1>Smart <span>Financial Document</span> Review at Your Fingertips</h1>
+        <p class="lead">
+          FinDocAI is an AI-powered desktop application that lets analysts securely upload,
+          classify, and analyse financial documents — bank statements, GST returns, ITRs,
+          invoices and more — with a single click.
+        </p>
+        <div class="d-flex flex-wrap gap-3">
+          <a href="#download" class="btn-download">
+            <i class="bi bi-windows"></i> Download for Windows
+          </a>
+          <a href="#features" class="btn-demo">
+            <i class="bi bi-play-circle"></i> Explore Features
+          </a>
+        </div>
+      </div>
+
+      <!-- Right — stat card -->
+      <div class="col-lg-6 float-anim">
+        <div class="hero-card">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <div style="width:10px;height:10px;border-radius:50%;background:#4ade80;"></div>
+            <span style="font-size:.8rem;color:rgba(255,255,255,.7);">FinDocAI · Live Dashboard</span>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-4">
+              <div class="hero-stat">
+                <span class="num">12</span>
+                <span class="lbl">Documents Uploaded</span>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="hero-stat">
+                <span class="num">3</span>
+                <span class="lbl">Anomalies Detected</span>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="hero-stat">
+                <span class="num">72%</span>
+                <span class="lbl">Risk Score</span>
+              </div>
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,.08);border-radius:12px;padding:1rem;">
+            <div class="d-flex justify-content-between mb-2" style="font-size:.85rem;color:rgba(255,255,255,.8);">
+              <span>Net Cash Flow</span><span style="color:#4ade80;">+₹2,40,000</span>
+            </div>
+            <div class="progress mb-1" style="height:6px;background:rgba(255,255,255,.15);">
+              <div class="progress-bar" style="width:72%;background:linear-gradient(90deg,#4ade80,#22d3ee);"></div>
+            </div>
+            <div class="d-flex justify-content-between mt-3" style="font-size:.85rem;color:rgba(255,255,255,.8);">
+              <span>Credits</span><span>₹5,20,000</span>
+            </div>
+            <div class="d-flex justify-content-between" style="font-size:.85rem;color:rgba(255,255,255,.8);">
+              <span>Debits</span><span style="color:#f87171;">₹2,80,000</span>
+            </div>
+          </div>
+          <div class="mt-3 d-flex flex-wrap gap-2">
+            <span style="background:rgba(74,222,128,.2);color:#4ade80;border-radius:6px;padding:.25rem .7rem;font-size:.75rem;font-weight:600;">✓ Bank Statement</span>
+            <span style="background:rgba(96,165,250,.2);color:#93c5fd;border-radius:6px;padding:.25rem .7rem;font-size:.75rem;font-weight:600;">✓ GST Return</span>
+            <span style="background:rgba(251,191,36,.2);color:#fcd34d;border-radius:6px;padding:.25rem .7rem;font-size:.75rem;font-weight:600;">✓ ITR Filed</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- wave -->
+<div class="wave-divider" style="margin-top:-2px;">
+  <svg viewBox="0 0 1440 60" preserveAspectRatio="none" style="width:100%;height:60px;">
+    <path d="M0,30 C360,60 1080,0 1440,30 L1440,60 L0,60 Z" fill="#f8fafc"/>
+  </svg>
+</div>
+
+<!-- ══════════════════════════════════════════
+     FEATURES
+══════════════════════════════════════════ -->
+<section id="features" class="py-6 py-md-5" style="padding-top:5rem;padding-bottom:5rem;">
+  <div class="container">
+    <div class="text-center mb-5">
+      <span class="section-tag">Core Features</span>
+      <h2 class="fw-800 mb-3" style="font-weight:800;font-size:2rem;">Everything You Need for Financial Compliance</h2>
+      <p class="text-muted mx-auto" style="max-width:560px;line-height:1.7;">
+        From secure document uploads to AI-powered classification and risk scoring —
+        FinDocAI gives auditors and analysts superpowers.
+      </p>
+    </div>
+
+    <div class="row g-4">
+
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#e3f2fd;">
+            <i class="bi bi-cloud-upload-fill" style="color:#1565c0;"></i>
+          </div>
+          <h5>Secure Document Upload</h5>
+          <p>Upload PDF, PNG, JPG, CSV, XLS/XLSX files (up to 25 MB each). All files are stored securely per user with JWT authentication.</p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#e8f5e9;">
+            <i class="bi bi-tags-fill" style="color:#2e7d32;"></i>
+          </div>
+          <h5>AI-Powered Classification</h5>
+          <p>Automatically classifies documents as Bank Statements, GST Returns, ITR, Invoices, Balance Sheets, Salary Slips, Loan Documents, and more.</p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#fff3e0;">
+            <i class="bi bi-speedometer2" style="color:#e65100;"></i>
+          </div>
+          <h5>Live Dashboard Analytics</h5>
+          <p>Real-time overview of document counts, bank transaction credits/debits, net cash flow, anomaly count, and risk score — all in one place.</p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#fce4ec;">
+            <i class="bi bi-shield-exclamation" style="color:#c62828;"></i>
+          </div>
+          <h5>Anomaly Detection</h5>
+          <p>Identify suspicious transactions and irregularities in financial data automatically with built-in anomaly flagging and risk assessment.</p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#ede7f6;">
+            <i class="bi bi-file-earmark-pdf-fill" style="color:#6a1b9a;"></i>
+          </div>
+          <h5>PDF Text Extraction</h5>
+          <p>Powered by PyMuPDF — instantly extracts text content from uploaded PDFs for fast review and record indexing without manual data entry.</p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#e0f7fa;">
+            <i class="bi bi-file-earmark-bar-graph-fill" style="color:#006064;"></i>
+          </div>
+          <h5>Report Export</h5>
+          <p>Generate and export financial reports as PDF directly in the browser using jsPDF — share summaries with your team instantly.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     HOW IT WORKS
+══════════════════════════════════════════ -->
+<section id="how-it-works" class="hiw-section py-5" style="padding-top:5rem;padding-bottom:5rem;">
+  <div class="container">
+    <div class="text-center mb-5">
+      <span class="section-tag">How It Works</span>
+      <h2 style="font-weight:800;font-size:2rem;">From Upload to Insight in 4 Steps</h2>
+    </div>
+
+    <div class="row g-4 text-center">
+      <div class="col-6 col-md-3">
+        <div class="step-circle">1</div>
+        <h6 class="fw-700 mb-2" style="font-weight:700;">Register & Login</h6>
+        <p class="text-muted small">Create a secure analyst account with email and password. JWT tokens keep your session safe.</p>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="step-circle">2</div>
+        <h6 class="fw-700 mb-2" style="font-weight:700;">Upload Documents</h6>
+        <p class="text-muted small">Drag and drop your financial files — PDFs, spreadsheets, or images — directly into the dashboard.</p>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="step-circle">3</div>
+        <h6 class="fw-700 mb-2" style="font-weight:700;">Auto-Classify & Extract</h6>
+        <p class="text-muted small">FinDocAI instantly classifies each document and extracts key financial data for review.</p>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="step-circle">4</div>
+        <h6 class="fw-700 mb-2" style="font-weight:700;">Analyse & Export</h6>
+        <p class="text-muted small">View risk scores, anomalies, and cash-flow analytics. Export polished PDF reports in one click.</p>
+      </div>
+    </div>
+
+
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     DOCUMENT TYPES
+══════════════════════════════════════════ -->
+<section class="py-5" style="padding-top:5rem;padding-bottom:5rem;">
+  <div class="container">
+    <div class="text-center mb-5">
+      <span class="section-tag">Supported Documents</span>
+      <h2 style="font-weight:800;font-size:2rem;">All Your Financial Documents, One Platform</h2>
+    </div>
+    <div class="d-flex flex-wrap justify-content-center gap-3">
+      <span class="badge rounded-pill fs-6 px-4 py-2" style="background:#e3f2fd;color:#1565c0;font-weight:600;"><i class="bi bi-bank me-1"></i>Bank Statements</span>
+      <span class="badge rounded-pill fs-6 px-4 py-2" style="background:#e8f5e9;color:#2e7d32;font-weight:600;"><i class="bi bi-receipt me-1"></i>GST Returns</span>
+      <span class="badge rounded-pill fs-6 px-4 py-2" style="background:#fff3e0;color:#e65100;font-weight:600;"><i class="bi bi-person-lines-fill me-1"></i>Income Tax Returns (ITR)</span>
+      <span class="badge rounded-pill fs-6 px-4 py-2" style="background:#ede7f6;color:#6a1b9a;font-weight:600;"><i class="bi bi-file-text me-1"></i>Invoices</span>
+      <span class="badge rounded-pill fs-6 px-4 py-2" style="background:#e0f7fa;color:#006064;font-weight:600;"><i class="bi bi-bar-chart-line me-1"></i>Balance Sheets</span>
+      <span class="badge rounded-pill fs-6 px-4 py-2" style="background:#fce4ec;color:#c62828;font-weight:600;"><i class="bi bi-graph-up me-1"></i>Profit & Loss</span>
+      <span class="badge rounded-pill fs-6 px-4 py-2" style="background:#f3e5f5;color:#7b1fa2;font-weight:600;"><i class="bi bi-cash-stack me-1"></i>Salary Slips</span>
+      <span class="badge rounded-pill fs-6 px-4 py-2" style="background:#e8eaf6;color:#283593;font-weight:600;"><i class="bi bi-building me-1"></i>Loan Documents</span>
+    </div>
+    <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+      <span class="tech-badge"><span class="tech-dot" style="background:#ef4444;"></span>PDF</span>
+      <span class="tech-badge"><span class="tech-dot" style="background:#3b82f6;"></span>PNG / JPG</span>
+      <span class="tech-badge"><span class="tech-dot" style="background:#10b981;"></span>CSV</span>
+      <span class="tech-badge"><span class="tech-dot" style="background:#f59e0b;"></span>XLS / XLSX</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     TECH STACK
+══════════════════════════════════════════ -->
+<section id="tech" class="hiw-section py-5" style="padding-top:5rem;padding-bottom:5rem;">
+  <div class="container">
+    <div class="text-center mb-5">
+      <span class="section-tag">Tech Stack</span>
+      <h2 style="font-weight:800;font-size:2rem;">Built with Modern, Proven Technologies</h2>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="feature-card">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-display fs-4" style="color:#1565c0;"></i>
+            <h5 class="mb-0 fw-700" style="font-weight:700;">Frontend</h5>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <span class="tech-badge"><span class="tech-dot" style="background:#61dafb;"></span>React 18</span>
+            <span class="tech-badge"><span class="tech-dot" style="background:#646cff;"></span>Vite</span>
+            <span class="tech-badge"><span class="tech-dot" style="background:#38bdf8;"></span>Tailwind CSS</span>
+            <span class="tech-badge"><span class="tech-dot" style="background:#f87171;"></span>Lucide Icons</span>
+            <span class="tech-badge"><span class="tech-dot" style="background:#ef4444;"></span>jsPDF</span>
+            <span class="tech-badge"><span class="tech-dot" style="background:#22c55e;"></span>Recharts</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="feature-card">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-server fs-4" style="color:#2e7d32;"></i>
+            <h5 class="mb-0 fw-700" style="font-weight:700;">Backend</h5>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <span class="tech-badge"><span class="tech-dot" style="background:#009688;"></span>FastAPI</span>
+            <span class="tech-badge"><span class="tech-dot" style="background:#4caf50;"></span>Uvicorn</span>
+            <span class="tech-badge"><span class="tech-dot" style="background:#ff9800;"></span>SQLAlchemy</span>
+            <span class="tech-badge"><span class="tech-dot" style="background:#e91e63;"></span>Pydantic</span>
+            <span class="tech-badge"><span class="tech-dot" style="background:#9c27b0;"></span>PyMuPDF</span>
+            <span class="tech-badge"><span class="tech-dot" style="background:#3f51b5;"></span>JWT Auth</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     DOWNLOAD SECTION
+══════════════════════════════════════════ -->
+<section id="download" class="download-section py-5" style="padding-top:5rem;padding-bottom:5rem;">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-9">
+        <div class="download-box text-center">
+          <div style="font-size:3.5rem;margin-bottom:1rem;">
+            <i class="bi bi-windows"></i>
+          </div>
+          <h2 style="font-weight:800;font-size:2rem;margin-bottom:.8rem;">Download FinDocAI</h2>
+          <p style="color:rgba(255,255,255,.8);font-size:1.05rem;max-width:500px;margin:0 auto 2rem;line-height:1.7;">
+            Get the standalone Windows desktop app — no Python or Node.js required.
+            Just download, run, and start reviewing your financial documents instantly.
+          </p>
+
+          <a href="https://github.com/vedsp/SIH/releases/latest/download/FinDocAI.exe" class="btn-dl-main" download>
+            <i class="bi bi-download"></i>
+            Download FinDocAI.exe
+          </a>
+
+          <div class="dl-meta mt-3">
+            <i class="bi bi-shield-check me-1"></i>Windows 10 / 11 &nbsp;·&nbsp;
+            <i class="bi bi-cpu me-1"></i>64-bit &nbsp;·&nbsp;
+            <i class="bi bi-box-seam me-1"></i>Self-contained .exe (no installation needed)
+          </div>
+
+          <!-- SmartScreen notice -->
+          <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:12px;padding:1rem 1.4rem;margin-top:1.2rem;margin-bottom:1.2rem;text-align:left;max-width:520px;margin-left:auto;margin-right:auto;">
+            <div style="display:flex;align-items:flex-start;gap:.8rem;">
+              <i class="bi bi-info-circle-fill" style="color:#93c5fd;font-size:1.2rem;margin-top:.1rem;flex-shrink:0;"></i>
+              <div>
+                <div style="font-weight:700;color:#fff;margin-bottom:.3rem;font-size:.9rem;">Windows SmartScreen notice</div>
+                <div style="color:rgba(255,255,255,.72);font-size:.82rem;line-height:1.6;">
+                  Windows may show a blue security prompt because this app is unsigned. This is normal for open-source apps.<br>
+                  Simply click <strong style="color:#fff;">"More info"</strong> → <strong style="color:#fff;">"Run anyway"</strong> to launch FinDocAI.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <hr style="border-color:rgba(255,255,255,.15);margin:2rem 0;">
+
+          <div class="row g-3 text-start">
+            <div class="col-md-4">
+              <div style="background:rgba(255,255,255,.08);border-radius:12px;padding:1.2rem;">
+                <i class="bi bi-1-circle-fill fs-5 mb-2" style="color:#93c5fd;"></i>
+                <div style="font-weight:600;margin-bottom:.3rem;">Download</div>
+                <div style="font-size:.83rem;color:rgba(255,255,255,.65);">Click the button above and save <span style="color:#fff;font-weight:600;">FinDocAI.exe</span> anywhere on your PC.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div style="background:rgba(255,255,255,.08);border-radius:12px;padding:1.2rem;">
+                <i class="bi bi-2-circle-fill fs-5 mb-2" style="color:#93c5fd;"></i>
+                <div style="font-weight:600;margin-bottom:.3rem;">Run</div>
+                <div style="font-size:.83rem;color:rgba(255,255,255,.65);">Double-click the file. A browser window opens automatically at <span style="color:#fff;font-weight:600;">localhost</span>.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div style="background:rgba(255,255,255,.08);border-radius:12px;padding:1.2rem;">
+                <i class="bi bi-3-circle-fill fs-5 mb-2" style="color:#93c5fd;"></i>
+                <div style="font-weight:600;margin-bottom:.3rem;">Analyse</div>
+                <div style="font-size:.83rem;color:rgba(255,255,255,.65);">Register, upload your financial docs, and get instant AI-powered insights.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════ -->
+<footer class="py-4">
+  <div class="container">
+    <div class="row align-items-center g-3">
+      <div class="col-md-4">
+        <span class="brand-footer">FinDocAI</span>
+        <div style="font-size:.8rem;margin-top:.3rem;">AI-Powered Financial Document Review</div>
+      </div>
+      <div class="col-md-4 text-md-center">
+        <div style="font-size:.8rem;">
+          Built for <strong style="color:#fff;">Smart India Hackathon 2026</strong>
+        </div>
+      </div>
+      <div class="col-md-4 text-md-end">
+        <div class="d-flex gap-3 justify-content-md-end">
+          <a href="#features"><i class="bi bi-grid-fill"></i> Features</a>
+          <a href="#download"><i class="bi bi-download"></i> Download</a>
+          <a href="#tech"><i class="bi bi-code-slash"></i> Stack</a>
+        </div>
+      </div>
+    </div>
+    <hr style="border-color:rgba(255,255,255,.1);margin-top:1.2rem;">
+    <div class="text-center" style="font-size:.78rem;">
+      © 2026 FinDocAI · Made with <i class="bi bi-heart-fill" style="color:#f87171;"></i> for Smart India Hackathon
+    </div>
+  </div>
+</footer>
+
+<!-- Bootstrap 5 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Smooth scroll + active nav highlight -->
+<script>
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+
+  // Intersection observer for fade-in
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (en.isIntersecting) {
+        en.target.style.opacity = '1';
+        en.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.feature-card, .hero-card, .download-box').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'opacity .5s ease, transform .5s ease';
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>

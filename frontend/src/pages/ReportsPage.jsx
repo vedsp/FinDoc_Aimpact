@@ -338,9 +338,9 @@ export const ReportsPage = () => {
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.5);
-      doc.text('Auditor Name: Vedant Prabhu & Associates', 18, certY + 33);
-      doc.text('ICAI Membership No: 514892 | Firm Reg No: 104821W', 18, certY + 37);
-      doc.text(`UDIN: 27514892AAAAAC${new Date().getFullYear()}01`, 18, certY + 41);
+      doc.text('Auditor Name: XXXXXXXXXXXXXXXXXX', 18, certY + 33);
+      doc.text('ICAI Membership No: XXXXXXXXX  |  Firm Reg No: XXXXXXXXX', 18, certY + 37);
+      doc.text('UDIN: XXXXXXXXXXXXXXXXXXXXXXXXX', 18, certY + 41);
 
       // Official Green Verification Stamp Box
       doc.setDrawColor(22, 101, 52);

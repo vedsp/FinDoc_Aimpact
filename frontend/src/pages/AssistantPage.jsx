@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Sparkles, RefreshCw, FileText } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function AssistantPage() {
   const [messages, setMessages] = useState([
@@ -74,7 +76,7 @@ export default function AssistantPage() {
       {/* Header */}
       <div className="p-3 border-b border-slate-200 flex items-center justify-between shrink-0 bg-slate-50">
         <div>
-          <div className="audit-kicker">FINANCIAL SCRUTINY COPILOT (RAG)</div>
+          <div className="audit-kicker">FINANCIAL SCRUTINY COPILOT</div>
           <h2 className="text-xs md:text-sm font-bold text-slate-900 tracking-tight flex items-center gap-1.5">
             <Bot className="w-4 h-4 text-[#0b3861]" />
             <span>AI Statutory Audit & Reconciliation Assistant</span>
@@ -118,7 +120,41 @@ export default function AssistantPage() {
                   ? 'bg-[#0b3861] text-white font-medium shadow-sm'
                   : 'bg-white border border-slate-300 text-slate-800 shadow-sm'
               }`}>
-                <div className="whitespace-pre-wrap">{m.text}</div>
+                {isUser ? (
+                  <div className="whitespace-pre-wrap">{m.text}</div>
+                ) : (
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      h1: ({node, ...props}) => <h1 className="text-sm font-bold text-slate-900 mb-1 mt-2" {...props} />,
+                      h2: ({node, ...props}) => <h2 className="text-xs font-bold text-slate-900 mb-1 mt-2" {...props} />,
+                      h3: ({node, ...props}) => <h3 className="text-xs font-semibold text-slate-800 mb-1 mt-1.5" {...props} />,
+                      p:  ({node, ...props}) => <p className="mb-1.5 leading-relaxed" {...props} />,
+                      strong: ({node, ...props}) => <strong className="font-bold text-slate-900" {...props} />,
+                      em: ({node, ...props}) => <em className="italic text-slate-700" {...props} />,
+                      ul: ({node, ...props}) => <ul className="list-disc list-inside mb-1.5 space-y-0.5" {...props} />,
+                      ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-1.5 space-y-0.5" {...props} />,
+                      li: ({node, ...props}) => <li className="text-xs leading-relaxed" {...props} />,
+                      code: ({node, inline, ...props}) => inline
+                        ? <code className="bg-slate-100 text-[#0b3861] px-1 py-0.5 rounded font-mono text-[11px]" {...props} />
+                        : <pre className="bg-slate-100 border border-slate-200 rounded p-2 overflow-x-auto font-mono text-[11px] text-slate-800 mb-2"><code {...props} /></pre>,
+                      table: ({node, ...props}) => (
+                        <div className="overflow-x-auto my-2">
+                          <table className="w-full border-collapse text-[11px] border border-slate-300" {...props} />
+                        </div>
+                      ),
+                      thead: ({node, ...props}) => <thead className="bg-[#0b3861] text-white" {...props} />,
+                      th: ({node, ...props}) => <th className="border border-slate-400 px-2 py-1.5 text-left font-semibold text-[11px]" {...props} />,
+                      tbody: ({node, ...props}) => <tbody {...props} />,
+                      tr: ({node, ...props}) => <tr className="even:bg-slate-50 hover:bg-blue-50/40 transition-colors" {...props} />,
+                      td: ({node, ...props}) => <td className="border border-slate-200 px-2 py-1.5 align-top" {...props} />,
+                      blockquote: ({node, ...props}) => <blockquote className="border-l-2 border-[#0b3861] pl-2.5 text-slate-600 italic mb-1.5" {...props} />,
+                      hr: ({node, ...props}) => <hr className="border-slate-200 my-2" {...props} />,
+                    }}
+                  >
+                    {m.text}
+                  </ReactMarkdown>
+                )}
 
                 {/* Sources chips */}
                 {m.sources && m.sources.length > 0 && (
